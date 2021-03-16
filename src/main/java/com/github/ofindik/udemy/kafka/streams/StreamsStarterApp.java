@@ -5,6 +5,7 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KTable;
 import org.apache.kafka.streams.kstream.Named;
@@ -14,6 +15,7 @@ import java.util.Arrays;
 import java.util.Properties;
 
 public class StreamsStarterApp {
+
 	public static void main (String[] args) {
 		Properties config = new Properties ();
 		config.put (StreamsConfig.APPLICATION_ID_CONFIG, "streams-starter-app");
@@ -22,6 +24,19 @@ public class StreamsStarterApp {
 		config.put (StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String ().getClass ());
 		config.put (StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String ().getClass ());
 
+		StreamsStarterApp streamsStarterApp = new StreamsStarterApp ();
+
+		KafkaStreams kafkaStreams = new KafkaStreams (streamsStarterApp.createTopology (), config);
+		kafkaStreams.start ();
+
+		// printed the topology
+		System.out.println (kafkaStreams.toString ());
+
+		// shutdown hook to correctly close the streams application
+		Runtime.getRuntime ().addShutdownHook (new Thread (kafkaStreams::close));
+	}
+
+	public Topology createTopology () {
 		StreamsBuilder streamsBuilder = new StreamsBuilder ();
 		// 1 - stream from Kafka
 		KStream<String, String> wordCountInput = streamsBuilder.stream ("word-count-input");
@@ -41,13 +56,6 @@ public class StreamsStarterApp {
 		// 7 - to in order to write the results back to kafka
 		wordCounts.toStream ().to ("word-count-output", Produced.with (Serdes.String (), Serdes.Long ()));
 
-		KafkaStreams kafkaStreams = new KafkaStreams (streamsBuilder.build (), config);
-		kafkaStreams.start ();
-
-		// printed the topology
-		System.out.println (kafkaStreams.toString ());
-
-		// shutdown hook to correctly close the streams application
-		Runtime.getRuntime ().addShutdownHook (new Thread (kafkaStreams::close));
+		return streamsBuilder.build ();
 	}
 }
