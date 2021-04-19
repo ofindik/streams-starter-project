@@ -38,12 +38,6 @@ public class StreamsStarterAppTest {
 	}
 
 	@Test
-	public void dummyTest () {
-		String dummy = "Du" + "mmy";
-		assertEquals (dummy, "Dummy");
-	}
-
-	@Test
 	public void makeSureCountsAreCorrect () {
 		TestInputTopic<String, String> inputTopic = testDriver.createInputTopic ("word-count-input",
 			new StringSerializer (), new StringSerializer ());
